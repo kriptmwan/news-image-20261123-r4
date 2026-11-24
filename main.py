@@ -169,21 +169,35 @@ def art_hormuz(d, x0, y0, x1, y1):
         d.ellipse([mx - 7, my - 7, mx + 7, my + 7], fill=(20, 20, 20))
 
 
-def band(d, y0, h, art_fn, kicker, headline, deck):
-    """One horizontal story band: art left, text right."""
+def band(d, y0, h, art_fn, kicker, headline, deck, side="left", head_size=38,
+         dek_lines=None):
+    """One horizontal story band: art on one side, text on the other.
+
+    deck is a single line by default; pass dek_lines=[...] for a taller
+    feature band with a two-line deck.
+    """
     x0, x1 = MARGIN, W - MARGIN
     art_w = 170
-    d.rectangle([x0, y0, x0 + art_w, y0 + h], fill=(255, 255, 255))
-    art_fn(d, x0, y0, x0 + art_w, y0 + h)
-    d.rectangle([x0, y0, x0 + art_w, y0 + h], outline=INK, width=2)
-    tx = x0 + art_w + 18
-    tw = x1 - tx
+    if side == "left":
+        ax0, ax1 = x0, x0 + art_w
+        tx = x0 + art_w + 18
+    else:
+        ax0, ax1 = x1 - art_w, x1
+        tx = x0
+    d.rectangle([ax0, y0, ax1, y0 + h], fill=(255, 255, 255))
+    art_fn(d, ax0, y0, ax1, y0 + h)
+    d.rectangle([ax0, y0, ax1, y0 + h], outline=INK, width=2)
     f_kick = font(SANS_B, 22)
-    f_head = font(SERIF_B, 38)
+    f_head = font(SERIF_B, head_size)
     f_dek = font(SANS, 30)
     d.text((tx, y0 + 6), kicker, font=f_kick, fill=RED)
     d.text((tx, y0 + 32), headline, font=f_head, fill=INK)
-    d.text((tx, y0 + 74), deck, font=f_dek, fill=(52, 50, 44))
+    if dek_lines:
+        f_dek2 = font(SANS, 28)
+        d.multiline_text((tx, y0 + 70), "\n".join(dek_lines), font=f_dek2,
+                         fill=(52, 50, 44), spacing=4)
+    else:
+        d.text((tx, y0 + 74), deck, font=f_dek, fill=(52, 50, 44))
 
 
 def build():
@@ -225,26 +239,30 @@ def build():
     art_lead(d, 652, ly0, x1, ly1)
     d.rectangle([652, ly0, x1, ly1], outline=INK, width=2)
 
-    # --- story bands ---
+    # --- story bands: varied geometry (feature + mirrored sides) so the
+    # page is not four identical strips ---
     y = 450
-    band_h = 104
-    gap = 10
-    band(d, y, band_h, art_cop31, "CLIMATE — ANTALYA, TURKEY",
-         "COP31 ends with no deal",
-         "Fossil-fuel deadlock sinks the talks in Antalya.")
-    y += band_h + gap
-    band(d, y, band_h, art_poland, "WAR — POLAND",
+    band(d, y, 132, art_cop31, "CLIMATE — ANTALYA, TURKEY",
+         "COP31 ends with no deal", "",
+         side="left", head_size=42,
+         dek_lines=["Fossil-fuel deadlock sinks the talks in Antalya.",
+                    "UN chief calls the outcome deeply disappointing."])
+    y += 132 + 4
+    band(d, y, 100, art_poland, "WAR — POLAND",
          "Russian drone crosses into Poland",
-         "NATO meets in emergency session in Brussels.")
-    y += band_h + gap
-    band(d, y, band_h, art_dymer, "WAR — UKRAINE",
+         "NATO meets in emergency session in Brussels.",
+         side="right")
+    y += 100 + 4
+    band(d, y, 100, art_dymer, "WAR — UKRAINE",
          "Strike on Dymer kills 11",
-         "Boy, 7, pulled alive after 14 hours in rubble.")
-    y += band_h + gap
-    band(d, y, band_h, art_hormuz, "MIDDLE EAST — STRAIT OF HORMUZ",
+         "Boy, 7, pulled alive after 14 hours in rubble.",
+         side="left")
+    y += 100 + 4
+    band(d, y, 100, art_hormuz, "MIDDLE EAST — STRAIT OF HORMUZ",
          "Three tankers hit mines in Hormuz",
-         "Trump warns of a \u201cvery traumatic\u201d outcome.")
-    y += band_h + gap  # y == 906
+         "Trump warns of a \u201cvery traumatic\u201d outcome.",
+         side="right")
+    y += 100 + 4  # y == 906
 
     # --- ticker strip ---
     ty0, ty1 = y, 992
